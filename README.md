@@ -5,13 +5,28 @@
 Presentation slides (serbian) can be found [here](https://docs.google.com/presentation/d/1gfiVajAiR8EHV__tFSZVNDnqCnU982NUOmHJSt6ENSw/edit?usp=sharing).
 
 
-## Setup
+## Training setup
+
+* Install the repository:
+
+```sh
+pip install -e .
+```
+
+* Log in to wandb for logging training:
+
+```sh
+wandb login #and enter API key when prompted
+```
 
 * Download the dataset from [here](https://www.kaggle.com/datasets/nih-chest-xrays/data?select=images_001), and extract the zip to get the `images` folder
 
 Note: we're only using the first 5000 images from the dataset
 
-## Update the training config
+* Set up the training configuration at `training_config.yml`, by changing the `training_dataset_location` and other training hyperparameters
 
-* Set the image resolution you want to train on...
-* Do other stuff...
+* Run training:
+
+```sh
+python src/train.py
+```

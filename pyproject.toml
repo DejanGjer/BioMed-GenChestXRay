@@ -1,0 +1,7 @@
+[project]
+
+dependencies = ["numpy", "torch", "torchaudio", "torchvision", "wandb"]
+
+name = "chest_xray_gan"
+version = "0.1.0"
+description = "Repository for generating fake chest X-ray data using GANs"

@@ -1,0 +1,6 @@
+dataset_location: /home/mmilenkovic/images
+training_images_to_use: 5000
+train_epochs: 3
+train_batch_size: 1000
+image_size: 512 #we resize our training images to sz x sz
+latent_size: 100
