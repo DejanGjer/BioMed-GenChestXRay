@@ -94,6 +94,10 @@ ENV/
 # Rope project settings
 .ropeproject
 
+# Ignore Axiom outputs
+*.out
+*.err
+
 # Ignore model checkpoints and logs (modify this based on your specific setup)
 **/wandb/
 **/runs/

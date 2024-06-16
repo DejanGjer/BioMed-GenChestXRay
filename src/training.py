@@ -1,3 +1,4 @@
+import os
 import torch
 import torchvision
 # from torch.utils.tensorboard import SummaryWriter
@@ -103,7 +104,7 @@ def train():
 
 if __name__ == "__main__":
     # login to wandb
-    api_key = "495a5b4509ce4b1ae15055b8f810dc296d4fa6fa"
+    api_key = os.environ['WANDB_API_KEY']
     wandb.login(key=api_key)
     run = wandb.init(project="DCGAN Demo")
 
