@@ -1,12 +1,13 @@
-dataset_location: /home/mmilenkovic/images
-training_images_to_use: 5000
-batch_size: 64
+dataset_location: /home/mmilenkovic/images/
+training_images_to_use: 5000 #Max images to take from train dataset
+max_summary_images: 4 # How many images to output to Tensorboard
+batch_size: 64 # Number of images in a batch
 image_size: 128 #we resize our training images to sz x sz
-channels: 1
-z_size: 100
-lr: 0.0001
-epochs: 3
-num_workers: 8
-clip_value: 0.01
+channels: 1 # Grayscale if 1
+z_size: 100 # Size of latent vector
+lr: 0.0001 # Learning rate
+epochs: 10 # Number of epochs
+num_workers: 8 # How many parallel workers for data ingestion. NOTE: Set to 0 when debugging
+clip_value: 0.01 # Used to clip the parameters of the critic network
 wandb_relogin: False #if true, manually log in to wandb, and uses wandb_api_key, otherwise use the default
 wandb_api_key: asdfasdfasdf
