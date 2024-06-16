@@ -1,6 +1,14 @@
 [project]
 
-dependencies = ["numpy", "torch", "torchaudio", "torchvision", "wandb"]
+dependencies = [
+    "numpy",
+    "torch",
+    "torchaudio",
+    "torchvision",
+    "wandb",
+    "pyyaml",
+    "tqdm",
+]
 
 name = "chest_xray_gan"
 version = "0.1.0"
