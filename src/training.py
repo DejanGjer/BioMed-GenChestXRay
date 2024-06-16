@@ -63,7 +63,8 @@ def train(training_config: TrainingConfig):
 
     # Initialize the data set. NOTE: You can pass total_images argument to avoid loading the whole dataset.
     data_set = FacesDataSet(
-        training_config.image_size,
+        img_size=training_config.image_size,
+        crop_size=training_config.image_size,
         total_images=training_config.training_images_to_use,
         image_dir=training_config.dataset_location,
     )
