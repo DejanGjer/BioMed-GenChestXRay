@@ -169,7 +169,6 @@ def train(training_config: TrainingConfig):
     print("Saved model to ",save_path)
 
 if __name__ == "__main__":
-    exit(0)
     # login to wandb
     script_dir = os.path.dirname(os.path.abspath(__file__))
     config_file = os.path.join(os.path.dirname(script_dir), "training_config.yml")

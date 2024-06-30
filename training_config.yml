@@ -8,7 +8,7 @@ image_size: 512 #we resize our training images to sz x sz
 channels: 1 # Grayscale if 1
 z_size: 100 # Size of latent vector
 lr: 0.0001 # Learning rate
-epochs: 10 # Number of epochs
+epochs: 100 # Number of epochs
 num_workers: 8 # How many parallel workers for data ingestion. NOTE: Set to 0 when debugging
 clip_value: 0.01 # Used to clip the parameters of the critic network
 wandb_relogin: False #if true, manually log in to wandb, and uses wandb_api_key, otherwise use the default
