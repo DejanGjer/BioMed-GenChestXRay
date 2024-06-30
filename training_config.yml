@@ -1,7 +1,7 @@
 model_name: DC # Name of the model (FC or DC)
 ngf: 64 # Number of filters in the generator and discriminator of DCGAN
 dataset_location: /home/mmilenkovic/images/ # Path to the dataset
-training_images_to_use: 200 #Max images to take from train dataset
+training_images_to_use: 5000 #Max images to take from train dataset
 max_summary_images: 4 # How many images to output to Tensorboard
 batch_size: 64 # Number of images in a batch
 image_size: 512 #we resize our training images to sz x sz
