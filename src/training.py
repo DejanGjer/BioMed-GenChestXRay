@@ -8,9 +8,10 @@ import torchvision
 import wandb
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import torch.nn as nn
 
-from critics import FCCritic
-from generators import FCGenerator
+from critics import FCCritic, DCGANCritic
+from generators import FCGenerator, DCGANGenerator
 from dataset import FacesDataSet
 
 DEVICE = torch.device(
@@ -19,9 +20,20 @@ DEVICE = torch.device(
 CUDA = torch.cuda.is_available()  # Use CUDA for faster training
 
 
+# custom weights initialization called on ``netG`` and ``netD``
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1:
+        nn.init.normal_(m.weight.data, 0.0, 0.02)
+    elif classname.find('BatchNorm') != -1:
+        nn.init.normal_(m.weight.data, 1.0, 0.02)
+        nn.init.constant_(m.bias.data, 0)
+
 # TODO: use all values here
 @dataclass
 class TrainingConfig:
+    model_name: str
+    ngf: int
     dataset_location: str
     training_images_to_use: int
     batch_size: int
@@ -52,11 +64,22 @@ def train(training_config: TrainingConfig):
     # Initialize the Tensorboard summary. Logs will end up in runs directory
     # summary_writer = SummaryWriter()
 
-    # Initialize the critic and the generator. NOTE: You can use other classes from critis.py and generators.py here.
-    critic = FCCritic(training_config.image_size, training_config.channels)
-    generator = FCGenerator(
-        training_config.image_size, training_config.channels, training_config.z_size
-    )
+    # Initialize the critic and the generator.
+    critic, generator = None, None
+    if training_config.model_name == "FC":
+        critic = FCCritic(training_config.image_size, training_config.channels)
+        generator = FCGenerator(
+            training_config.image_size, training_config.channels, training_config.z_size
+        )
+    elif training_config.model_name == "DC":
+        critic = DCGANCritic(training_config.image_size, training_config.channels, training_config.ngf)
+        generator = DCGANGenerator(
+            training_config.image_size, training_config.channels, training_config.z_size, training_config.ngf
+        )
+        critic.apply(weights_init)
+        generator.apply(weights_init)
+    else:
+        raise ValueError(f"Unknown model name: {training_config.model_name}")
 
     critic.to(DEVICE)
     generator.to(DEVICE)
