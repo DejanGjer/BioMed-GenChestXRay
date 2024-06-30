@@ -35,49 +35,6 @@ class FCCritic(nn.Module):
         x = self.fc2(x)
         x = self.relu(x)
         return self.fc3(x)
-
-# class DCGANCritic(nn.Module):
-#     def __init__(self, img_size, channels):
-#         """
-#         DCGAN is only defined for 64x64 images, it takes the img_size and channels here only not to break the interface
-
-#         :param img_size:
-#         :param channels:
-#         """
-#         super(DCGANCritic, self).__init__()
-#         assert img_size == 64, "Works only for 64x64 images"
-#         self.img_size = img_size
-#         self.channels = channels
-
-#         kernel_size = (5,5)
-#         stride = (2,2)
-#         padding_mode = "replicate"
-#         self.conv1 = nn.Conv2d(self.channels, 64, kernel_size, stride, padding_mode=padding_mode)
-#         self.conv2 = nn.Conv2d(64, 128, kernel_size, stride, padding_mode=padding_mode)
-#         self.conv3 = nn.Conv2d(128, 256, kernel_size, stride, padding_mode=padding_mode)
-#         self.conv4 = nn.Conv2d(256, 1024, kernel_size, stride, padding_mode=padding_mode)
-#         self.fc1 = nn.Linear(4*4*1024, 1)
-#         self.relu = nn.ReLU()
-
-#     def forward(self, image):
-#         """
-#         Works only for 64x64
-
-#         :param image:
-#         :param reuse:
-#         :return:
-#         """
-#         x = self.conv1(image)
-#         x = self.relu(x)
-#         x = self.conv2(x)
-#         x = self.relu(x)
-#         x = self.conv3(x)
-#         x = self.relu(x)
-#         x = self.conv4(x)
-#         x = self.relu(x)
-
-#         x = self.fc1(x.flatten())
-#         return x
     
 class DCGANCritic(nn.Module):
     def __init__(self, image_size, channels, ngf=64):
@@ -98,28 +55,6 @@ class DCGANCritic(nn.Module):
             nn.Conv2d(self.ngf * (2 ** (self.n_blocks - 2)), 1, 4, 1, 0, bias=False),
             nn.Sigmoid()
         ))
-
-
-        # self.main = nn.Sequential(
-        #     # input is ``(nc) x 64 x 64``
-        #     nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
-        #     nn.LeakyReLU(0.2, inplace=True),
-        #     # state size. ``(ndf) x 32 x 32``
-        #     nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
-        #     nn.BatchNorm2d(ndf * 2),
-        #     nn.LeakyReLU(0.2, inplace=True),
-        #     # state size. ``(ndf*2) x 16 x 16``
-        #     nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
-        #     nn.BatchNorm2d(ndf * 4),
-        #     nn.LeakyReLU(0.2, inplace=True),
-        #     # state size. ``(ndf*4) x 8 x 8``
-        #     nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
-        #     nn.BatchNorm2d(ndf * 8),
-        #     nn.LeakyReLU(0.2, inplace=True),
-        #     # state size. ``(ndf*8) x 4 x 4``
-        #     nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
-        #     nn.Sigmoid()
-        # )
 
     def create_conv_block(self, in_channels, out_channels):
         return nn.Sequential(
