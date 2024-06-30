@@ -164,9 +164,12 @@ def train(training_config: TrainingConfig):
                     caption="Top: Output, Bottom: Input",
                 )
                 wandb.log({"Generated images": images}, step=global_step)
-
+    save_path=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),"models","x_ray_generator.pt")
+    torch.save(generator,save_path)
+    print("Saved model to ",save_path)
 
 if __name__ == "__main__":
+    exit(0)
     # login to wandb
     script_dir = os.path.dirname(os.path.abspath(__file__))
     config_file = os.path.join(os.path.dirname(script_dir), "training_config.yml")
