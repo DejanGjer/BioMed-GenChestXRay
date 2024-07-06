@@ -4,7 +4,7 @@ dataset_location: /home/mmilenkovic/images/ # Path to the dataset
 training_images_to_use: 5000 #Max images to take from train dataset
 max_summary_images: 4 # How many images to output to Tensorboard
 batch_size: 64 # Number of images in a batch
-image_size: 256 #we resize our training images to sz x sz
+image_size: 64 #we resize our training images to sz x sz
 channels: 1 # Grayscale if 1, TODO: check why >1 doesn't work
 z_size: 100 # Size of latent vector
 lr: 0.0001 # Learning rate
