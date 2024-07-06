@@ -1,3 +1,4 @@
+from typing import Optional
 import os
 from dataclasses import dataclass
 import yaml
@@ -7,8 +8,9 @@ import torchvision
 # from torch.utils.tensorboard import SummaryWriter
 import wandb
 from torch.utils.data import DataLoader
-from tqdm import tqdm
+from torch.optim.lr_scheduler import LambdaLR
 import torch.nn as nn
+from tqdm import tqdm
 
 from critics import FCCritic, DCGANCritic
 from generators import FCGenerator, DCGANGenerator
@@ -40,17 +42,21 @@ class TrainingConfig:
     image_size: int
     channels: int
     z_size: int
-    lr: float
+    lr_critic: float
+    lr_generator: float
     epochs: int
     num_workers: int
     clip_value: float
     wandb_relogin: bool
     wandb_api_key: str
+    c_times: Optional[int]=1
+    g_times: Optional[int]=1
 
     def __post_init__(self):
         assert (
             self.max_summary_images <= self.batch_size
         ), "We can only write to Tensorboard as many images as there are in a batch"
+        assert not (self.c_times!=1 and self.g_times!=1),"Can't train both critic and generator more than the other"
 
     @classmethod
     def from_yaml(cls, yaml_file: str) -> "TrainingConfig":
@@ -100,14 +106,20 @@ def train(training_config: TrainingConfig):
         drop_last=True,
     )
 
-    optimizer_c = torch.optim.RMSprop(critic.parameters(), lr=training_config.lr)
-    optimizer_g = torch.optim.RMSprop(generator.parameters(), lr=training_config.lr)
+    optimizer_c = torch.optim.RMSprop(critic.parameters(), lr=training_config.lr_critic)
+    optimizer_g = torch.optim.RMSprop(generator.parameters(), lr=training_config.lr_generator)
 
+    critic_lr_lambda = lambda epoch: max(0, 1 - epoch / training_config.epochs)
+    generator_lr_lambda = lambda epoch: max(0, 1 - epoch / training_config.epochs)
+
+    # Create schedulers for critic and generator
+    scheduler_critic = LambdaLR(optimizer_c, lr_lambda=critic_lr_lambda)
+    scheduler_generator = LambdaLR(optimizer_g, lr_lambda=generator_lr_lambda)
+
+    #TODO: add option to train generator more than critic
+    assert training_config.g_times==1
     for epoch in range(training_config.epochs):
-        if epoch < 10:
-            c_times = 100
-        else:
-            c_times = 5
+        c_times = training_config.c_times
 
         for i, real_img_batch in tqdm(
             enumerate(data_loader),
@@ -138,6 +150,8 @@ def train(training_config: TrainingConfig):
             loss_c.backward()
             # Apply backward prop
             optimizer_c.step()
+            scheduler_critic.step(epoch=epoch)
+
             # Clip the weights of the critic to satisfy the Lipschitz constraint
             for p in critic.parameters():
                 p.data.clamp_(-training_config.clip_value, training_config.clip_value)
@@ -156,6 +170,7 @@ def train(training_config: TrainingConfig):
                 loss_g.backward()
                 # Apply backward prop
                 optimizer_g.step()
+                scheduler_generator.step(epoch=epoch)
 
                 # summary_writer.add_images("Generated images", gen_imgs[:MAX_SUMMARY_IMAGES], global_step)
                 images = wandb.Image(

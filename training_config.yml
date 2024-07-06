@@ -7,7 +7,10 @@ batch_size: 64 # Number of images in a batch
 image_size: 64 #we resize our training images to sz x sz
 channels: 1 # Grayscale if 1, TODO: check why >1 doesn't work
 z_size: 100 # Size of latent vector
-lr: 0.0001 # Learning rate
+c_times: 3 # critic training iterations per generator iteration
+g_times: 1 # generator training iterations per critic iteration (exclusive with c_times)
+lr_critic: 0.0005 # Critic earning rate (linearly decays to 0 during training for both critic and generator)
+lr_generator: 0.0001 # Generator learning rate (linearly decays to 0 during training for both critic and generator)
 epochs: 100 # Number of epochs
 num_workers: 8 # How many parallel workers for data ingestion. NOTE: Set to 0 when debugging
 clip_value: 0.01 # Used to clip the parameters of the critic network
