@@ -1,14 +1,17 @@
 model_name: DC # Name of the model (FC or DC)
 ngf: 64 # Number of filters in the generator and discriminator of DCGAN
-dataset_location: ./data/Data_bdbm # Path to the dataset
-training_images_to_use: 200 #Max images to take from train dataset
+dataset_location: /home/mmilenkovic/images/ # Path to the dataset
+training_images_to_use: 5000 #Max images to take from train dataset
 max_summary_images: 4 # How many images to output to Tensorboard
 batch_size: 64 # Number of images in a batch
-image_size: 256 #we resize our training images to sz x sz
-channels: 1 # Grayscale if 1
+image_size: 64 #we resize our training images to sz x sz
+channels: 1 # Grayscale if 1, TODO: check why >1 doesn't work
 z_size: 100 # Size of latent vector
-lr: 0.0001 # Learning rate
-epochs: 10 # Number of epochs
+c_times: 3 # critic training iterations per generator iteration
+g_times: 1 # generator training iterations per critic iteration (exclusive with c_times)
+lr_critic: 0.0005 # Critic earning rate (linearly decays to 0 during training for both critic and generator)
+lr_generator: 0.0001 # Generator learning rate (linearly decays to 0 during training for both critic and generator)
+epochs: 100 # Number of epochs
 num_workers: 8 # How many parallel workers for data ingestion. NOTE: Set to 0 when debugging
 clip_value: 0.01 # Used to clip the parameters of the critic network
 wandb_relogin: False #if true, manually log in to wandb, and uses wandb_api_key, otherwise use the default

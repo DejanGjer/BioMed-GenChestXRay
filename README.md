@@ -28,5 +28,5 @@ Note: we're only using the first 5000 images from the dataset
 * Run training:
 
 ```sh
-python src/train.py
+python src/training.py
 ```
