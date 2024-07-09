@@ -10,7 +10,7 @@ z_size: 100 # Size of latent vector
 c_times: 3 # critic training iterations per generator iteration
 g_times: 1 # generator training iterations per critic iteration (exclusive with c_times)
 lr_critic: 0.0005 # Critic earning rate (linearly decays to 0 during training for both critic and generator)
-lr_generator: 0.0004 # Generator learning rate (linearly decays to 0 during training for both critic and generator)
+lr_generator: 0.0005 # Generator learning rate (linearly decays to 0 during training for both critic and generator)
 epochs: 100 # Number of epochs
 num_workers: 8 # How many parallel workers for data ingestion. NOTE: Set to 0 when debugging
 clip_value: 0.01 # Used to clip the parameters of the critic network
