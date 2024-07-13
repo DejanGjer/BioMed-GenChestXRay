@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import math
 
+from config import TrainingConfig
+
 class FCGenerator(nn.Module):
     def __init__(self, image_size, channels, z_size):
         """
@@ -19,6 +21,10 @@ class FCGenerator(nn.Module):
         self.fc3 = nn.Linear(512, image_size*image_size*channels)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
+
+    @classmethod
+    def from_config(cls,config:TrainingConfig):
+        return cls(image_size=config.image_size,channels=config.channels,z_size=config.z_size)
 
     def forward(self, z_batch):
         x = self.fc1(z_batch)
@@ -56,6 +62,11 @@ class DCGANGenerator(nn.Module):
             nn.ConvTranspose2d(self.ngf, self.channels, 4, 2, 1, bias=False),
             nn.Sigmoid()
         ))
+
+    @classmethod
+    def from_config(cls,config:TrainingConfig):
+        return cls(image_size=config.image_size,channels=config.channels,z_size=config.z_size,ngf=config.ngf)
+
 
     def create_conv_block(self, in_channels, out_channels):
         return nn.Sequential(

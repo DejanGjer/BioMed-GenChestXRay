@@ -2,8 +2,10 @@ import torch
 import torch.nn as nn
 import math
 
+from config import TrainingConfig
+
 class FCCritic(nn.Module):
-    def __init__(self, img_size, channels):
+    def __init__(self, image_size, channels):
         """
         Neural network which takes a batch of images and creates a batch of scalars which represent a score for how
         real the image looks.
@@ -14,13 +16,17 @@ class FCCritic(nn.Module):
         :param channels: number of channels in the image (RGB = 3, Black/White = 1)
         """
         super(FCCritic, self).__init__()
-        self.img_size = img_size
+        self.image_size = image_size
         self.channels = channels
 
-        self.fc1 = nn.Linear(img_size*img_size*channels, 512)
+        self.fc1 = nn.Linear(image_size*image_size*channels, 512)
         self.fc2 = nn.Linear(512, 512)
         self.fc3 = nn.Linear(512, 1)
         self.relu = nn.ReLU()
+
+    @classmethod
+    def from_config(cls,config:TrainingConfig):
+        return cls(image_size=config.image_size,channels=config.channels)
 
     def forward(self, image_batch):
         """
@@ -55,6 +61,11 @@ class DCGANCritic(nn.Module):
             nn.Conv2d(self.ngf * (2 ** (self.n_blocks - 2)), 1, 4, 1, 0, bias=False),
             nn.Sigmoid()
         ))
+    
+    @classmethod
+    def from_config(cls,config:TrainingConfig):
+        return cls(image_size=config.image_size,channels=config.channels,ngf=config.ngf)
+
 
     def create_conv_block(self, in_channels, out_channels):
         return nn.Sequential(

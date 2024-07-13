@@ -1,6 +1,5 @@
-from typing import Optional, Any
+from typing import Any
 import os
-from dataclasses import dataclass
 import yaml
 import torch
 from datetime import datetime
@@ -14,7 +13,8 @@ from tqdm import tqdm
 
 from critics import FCCritic, DCGANCritic
 from generators import FCGenerator, DCGANGenerator
-from dataset import FacesDataSet
+from dataset import XRayDataset
+from config import TrainingConfig
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -31,38 +31,6 @@ def weights_init(m):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
 
-@dataclass
-class TrainingConfig:
-    model_name: str
-    ngf: int
-    dataset_location: str
-    training_images_to_use: int
-    batch_size: int
-    max_summary_images: int
-    image_size: int
-    channels: int
-    z_size: int
-    lr_critic: float
-    lr_generator: float
-    epochs: int
-    num_workers: int
-    clip_value: float
-    wandb_relogin: bool
-    wandb_api_key: str
-    c_times: Optional[int]=1
-    g_times: Optional[int]=1
-
-    def __post_init__(self):
-        assert (
-            self.max_summary_images <= self.batch_size
-        ), "We can only write to Tensorboard as many images as there are in a batch"
-        assert not (self.c_times!=1 and self.g_times!=1),"Can't train both critic and generator more than the other"
-
-    @classmethod
-    def from_yaml(cls, yaml_file: str) -> "TrainingConfig":
-        with open(yaml_file, "r") as f:
-            yaml_data = yaml.safe_load(f)
-        return cls(**yaml_data)
 
 def save_model(model:torch.nn.Module,config:Any):
     current_time = datetime.now()
@@ -86,15 +54,19 @@ def train(training_config: TrainingConfig):
     # Initialize the critic and the generator.
     critic, generator = None, None
     if training_config.model_name == "FC":
-        critic = FCCritic(training_config.image_size, training_config.channels)
-        generator = FCGenerator(
-            training_config.image_size, training_config.channels, training_config.z_size
-        )
+        critic=FCCritic.from_config(training_config)
+        # critic = FCCritic(training_config.image_size, training_config.channels)
+        generator=FCGenerator.from_config(training_config)
+        # generator = FCGenerator(
+        #     training_config.image_size, training_config.channels, training_config.z_size
+        # )
     elif training_config.model_name == "DC":
-        critic = DCGANCritic(training_config.image_size, training_config.channels, training_config.ngf)
-        generator = DCGANGenerator(
-            training_config.image_size, training_config.channels, training_config.z_size, training_config.ngf
-        )
+        critic = DCGANCritic.from_config(training_config)
+        # critic = DCGANCritic(training_config.image_size, training_config.channels, training_config.ngf)
+        generator=DCGANGenerator.from_config(training_config)
+        # generator = DCGANGenerator(
+        #     training_config.image_size, training_config.channels, training_config.z_size, training_config.ngf
+        # )
         critic.apply(weights_init)
         generator.apply(weights_init)
     else:
@@ -104,7 +76,7 @@ def train(training_config: TrainingConfig):
     generator.to(DEVICE)
 
     # Initialize the data set. NOTE: You can pass total_images argument to avoid loading the whole dataset.
-    data_set = FacesDataSet(
+    data_set = XRayDataset(
         img_size=training_config.image_size,
         crop_size=training_config.image_size,
         total_images=training_config.training_images_to_use,
