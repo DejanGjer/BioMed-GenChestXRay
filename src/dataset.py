@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 
 
-class FacesDataSet(Dataset):
+class XRayDataset(Dataset):
     def __init__(self, img_size, image_dir: str, crop_size=128, total_images=None):
         assert img_size <= crop_size <= 1024
         self.img_size = img_size

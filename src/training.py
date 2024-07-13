@@ -1,26 +1,28 @@
-from typing import Optional
+from typing import Any
 import os
-from dataclasses import dataclass
+import shutil
 import yaml
 import torch
-import torchvision
+from datetime import datetime
 
 # from torch.utils.tensorboard import SummaryWriter
 import wandb
+from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import LambdaLR
 import torch.nn as nn
-from tqdm import tqdm
+from torcheval.metrics import FrechetInceptionDistance
 
 from critics import FCCritic, DCGANCritic
 from generators import FCGenerator, DCGANGenerator
-from dataset import FacesDataSet
+from dataset import XRayDataset
+from config import TrainingConfig
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )  # Boilerplate code for using CUDA for faster training
 CUDA = torch.cuda.is_available()  # Use CUDA for faster training
-
+OVERRIDE_CKPT=True
 
 # custom weights initialization called on ``netG`` and ``netD``
 def weights_init(m):
@@ -31,56 +33,43 @@ def weights_init(m):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
 
-@dataclass
-class TrainingConfig:
-    model_name: str
-    ngf: int
-    dataset_location: str
-    training_images_to_use: int
-    batch_size: int
-    max_summary_images: int
-    image_size: int
-    channels: int
-    z_size: int
-    lr_critic: float
-    lr_generator: float
-    epochs: int
-    num_workers: int
-    clip_value: float
-    wandb_relogin: bool
-    wandb_api_key: str
-    c_times: Optional[int]=1
-    g_times: Optional[int]=1
 
-    def __post_init__(self):
-        assert (
-            self.max_summary_images <= self.batch_size
-        ), "We can only write to Tensorboard as many images as there are in a batch"
-        assert not (self.c_times!=1 and self.g_times!=1),"Can't train both critic and generator more than the other"
-
-    @classmethod
-    def from_yaml(cls, yaml_file: str) -> "TrainingConfig":
-        with open(yaml_file, "r") as f:
-            yaml_data = yaml.safe_load(f)
-        return cls(**yaml_data)
-
+def save_model(model:torch.nn.Module,config:Any):
+    current_time = datetime.now()
+    timestamp = current_time.strftime("%Y%m%d%H%M")
+    models_dir=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),"models")
+    if OVERRIDE_CKPT:
+        shutil.rmtree(models_dir, ignore_errors=True)
+    save_dir=os.path.join(models_dir,timestamp)
+    os.makedirs(save_dir,exist_ok=True)
+    save_path=os.path.join(save_dir,"x_ray_generator.pt")
+    torch.save(model.state_dict(),save_path)
+    config_path = os.path.join(save_dir, "config.yaml")
+    with open(config_path, 'w') as f:
+        yaml.dump(config.__dict__, f)
+    print("Saved model to ",save_dir)
 
 def train(training_config: TrainingConfig):
+    fid=FrechetInceptionDistance()
     # Initialize the Tensorboard summary. Logs will end up in runs directory
     # summary_writer = SummaryWriter()
 
     # Initialize the critic and the generator.
     critic, generator = None, None
     if training_config.model_name == "FC":
-        critic = FCCritic(training_config.image_size, training_config.channels)
-        generator = FCGenerator(
-            training_config.image_size, training_config.channels, training_config.z_size
-        )
+        critic=FCCritic.from_config(training_config)
+        # critic = FCCritic(training_config.image_size, training_config.channels)
+        generator=FCGenerator.from_config(training_config)
+        # generator = FCGenerator(
+        #     training_config.image_size, training_config.channels, training_config.z_size
+        # )
     elif training_config.model_name == "DC":
-        critic = DCGANCritic(training_config.image_size, training_config.channels, training_config.ngf)
-        generator = DCGANGenerator(
-            training_config.image_size, training_config.channels, training_config.z_size, training_config.ngf
-        )
+        critic = DCGANCritic.from_config(training_config)
+        # critic = DCGANCritic(training_config.image_size, training_config.channels, training_config.ngf)
+        generator=DCGANGenerator.from_config(training_config)
+        # generator = DCGANGenerator(
+        #     training_config.image_size, training_config.channels, training_config.z_size, training_config.ngf
+        # )
         critic.apply(weights_init)
         generator.apply(weights_init)
     else:
@@ -90,7 +79,7 @@ def train(training_config: TrainingConfig):
     generator.to(DEVICE)
 
     # Initialize the data set. NOTE: You can pass total_images argument to avoid loading the whole dataset.
-    data_set = FacesDataSet(
+    data_set = XRayDataset(
         img_size=training_config.image_size,
         crop_size=training_config.image_size,
         total_images=training_config.training_images_to_use,
@@ -156,6 +145,16 @@ def train(training_config: TrainingConfig):
             for p in critic.parameters():
                 p.data.clamp_(-training_config.clip_value, training_config.clip_value)
 
+            if  i%200==0:
+                #NOTE: only calculating FID score every 200 iters because this is much slower than training
+                fid.reset()
+                #convert to RGB format expected by inception
+                real_images=real_img_batch.repeat(1,3,1,1)
+                fake_images=fake_img_batch.repeat(1,3,1,1)
+                fid.update(real_images,is_real=True)
+                fid.update(fake_images,is_real=False)
+                fid_score=fid.compute()
+                wandb.log({"FID score":fid_score},step=global_step)
             # Train the generator only after the critic has been trained c_times
             if i % c_times == 0:
                 optimizer_g.zero_grad()
@@ -178,11 +177,8 @@ def train(training_config: TrainingConfig):
                     caption="Top: Output, Bottom: Input",
                 )
                 wandb.log({"Generated images": images}, step=global_step)
-    save_dir=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),"models")
-    os.makedirs(save_dir,exist_ok=True)
-    save_path=os.path.join(save_dir,"x_ray_generator.pt")
-    torch.save(generator,save_path)
-    print("Saved model to ",save_path)
+    save_model(model=generator,config=training_config)
+    
 
 if __name__ == "__main__":
     # login to wandb

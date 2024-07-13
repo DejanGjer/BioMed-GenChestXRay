@@ -108,4 +108,4 @@ ENV/
 # Ignore data
 data/
 # Ignore trained model checkpoints
-models/
+# models/

@@ -30,3 +30,9 @@ Note: we're only using the first 5000 images from the dataset
 ```sh
 python src/training.py
 ```
+
+* Run inference:
+
+```sh
+python src/inference.py --ckpt_dir /home/mmilenkovic/git/BioMed-GenChestXRay/models/202407130110/ --num_images 5
+```
