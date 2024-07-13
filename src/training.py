@@ -1,9 +1,9 @@
-from typing import Optional
+from typing import Optional, Any
 import os
 from dataclasses import dataclass
 import yaml
 import torch
-import torchvision
+from datetime import datetime
 
 # from torch.utils.tensorboard import SummaryWriter
 import wandb
@@ -20,7 +20,7 @@ DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
 )  # Boilerplate code for using CUDA for faster training
 CUDA = torch.cuda.is_available()  # Use CUDA for faster training
-
+OVERRIDE_CKPT=True
 
 # custom weights initialization called on ``netG`` and ``netD``
 def weights_init(m):
@@ -64,6 +64,20 @@ class TrainingConfig:
             yaml_data = yaml.safe_load(f)
         return cls(**yaml_data)
 
+def save_model(model:torch.nn.Module,config:Any):
+    current_time = datetime.now()
+    timestamp = current_time.strftime("%Y%m%d%H%M")
+    models_dir=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),"models")
+    if OVERRIDE_CKPT:
+        os.rmdir(models_dir)
+    save_dir=os.path.join(models_dir,timestamp)
+    os.makedirs(save_dir,exist_ok=True)
+    save_path=os.path.join(save_dir,"x_ray_generator.pt")
+    torch.save(model,save_path)
+    config_path = os.path.join(save_dir, "config.yaml")
+    with open(config_path, 'w') as f:
+        yaml.dump(config.__dict__, f)
+    print("Saved model to ",save_dir)
 
 def train(training_config: TrainingConfig):
     # Initialize the Tensorboard summary. Logs will end up in runs directory
@@ -178,11 +192,8 @@ def train(training_config: TrainingConfig):
                     caption="Top: Output, Bottom: Input",
                 )
                 wandb.log({"Generated images": images}, step=global_step)
-    save_dir=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),"models")
-    os.makedirs(save_dir,exist_ok=True)
-    save_path=os.path.join(save_dir,"x_ray_generator.pt")
-    torch.save(generator,save_path)
-    print("Saved model to ",save_path)
+    save_model(model=generator,config=training_config)
+    
 
 if __name__ == "__main__":
     # login to wandb
