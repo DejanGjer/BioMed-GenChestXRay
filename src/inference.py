@@ -11,7 +11,7 @@ DEVICE = torch.device(
 if __name__=="__main__":
     """
     Example usage:
-    python inference.py --ckpt_dir /home/mmilenkovic/git/BioMed-GenChestXRay/models/202407130030/ --num_images 5
+    python inference.py --ckpt_dir /home/mmilenkovic/git/BioMed-GenChestXRay/models/202407130110/ --num_images 5
     """
     ap=ArgumentParser()
     ap.add_argument("--ckpt_dir",type=str,help="path to load trained model from",required=True)
