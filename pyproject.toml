@@ -3,7 +3,7 @@
 dependencies = [
     "numpy",
     "torch",
-    "torchaudio",
+    "torcheval",
     "torchvision",
     "wandb",
     "pyyaml",
