@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import math
@@ -67,7 +68,15 @@ class DCGANGenerator(nn.Module):
     def from_config(cls,config:TrainingConfig):
         return cls(image_size=config.image_size,channels=config.channels,z_size=config.z_size,ngf=config.ngf)
 
-
+    @classmethod
+    def from_ckpt(cls,ckpt_dir:str):
+        config_path=os.path.join(ckpt_dir,"config.yaml")
+        config=TrainingConfig.from_yaml(config_path)
+        generator=DCGANGenerator.from_config(config)
+        weight_path = os.path.join(ckpt_dir, "x_ray_generator.pt")
+        generator.load_state_dict(torch.load(weight_path,map_location="cpu"))
+        return generator
+    
     def create_conv_block(self, in_channels, out_channels):
         return nn.Sequential(
             nn.ConvTranspose2d(in_channels, out_channels, 4, 2, 1, bias=False),

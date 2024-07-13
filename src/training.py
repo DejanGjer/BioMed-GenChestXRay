@@ -1,5 +1,6 @@
 from typing import Any
 import os
+import shutil
 import yaml
 import torch
 from datetime import datetime
@@ -37,11 +38,11 @@ def save_model(model:torch.nn.Module,config:Any):
     timestamp = current_time.strftime("%Y%m%d%H%M")
     models_dir=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),"models")
     if OVERRIDE_CKPT:
-        os.rmdir(models_dir)
+        shutil.rmtree(models_dir, ignore_errors=True)
     save_dir=os.path.join(models_dir,timestamp)
     os.makedirs(save_dir,exist_ok=True)
     save_path=os.path.join(save_dir,"x_ray_generator.pt")
-    torch.save(model,save_path)
+    torch.save(model.state_dict(),save_path)
     config_path = os.path.join(save_dir, "config.yaml")
     with open(config_path, 'w') as f:
         yaml.dump(config.__dict__, f)
