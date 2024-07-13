@@ -150,7 +150,7 @@ def train(training_config: TrainingConfig):
                 fid.reset()
                 #convert to RGB format expected by inception
                 real_images=real_img_batch.repeat(1,3,1,1)
-                fake_images=real_img_batch.repeat(1,3,1,1)
+                fake_images=fake_img_batch.repeat(1,3,1,1)
                 fid.update(real_images,is_real=True)
                 fid.update(fake_images,is_real=False)
                 fid_score=fid.compute()
