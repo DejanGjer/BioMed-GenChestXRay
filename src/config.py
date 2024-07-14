@@ -8,6 +8,7 @@ class TrainingConfig:
     ngf: int
     dataset_location: str
     training_images_to_use: int
+    log_interval: int
     batch_size: int
     max_summary_images: int
     image_size: int
