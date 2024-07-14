@@ -133,8 +133,6 @@ def train(training_config: TrainingConfig):
             out_fake = critic(fake_img_batch)
             loss_c = -(torch.mean(out_real) - torch.mean(out_fake))
 
-            # summary_writer.add_scalar("Critic loss", loss_c, global_step)
-            wandb.log({"Critic loss": loss_c}, step=global_step)
             # Calculate the gradients with respect to the input
             loss_c.backward()
             # Apply backward prop
@@ -145,16 +143,6 @@ def train(training_config: TrainingConfig):
             for p in critic.parameters():
                 p.data.clamp_(-training_config.clip_value, training_config.clip_value)
 
-            if  i%200==0:
-                #NOTE: only calculating FID score every 200 iters because this is much slower than training
-                fid.reset()
-                #convert to RGB format expected by inception
-                real_images=real_img_batch.repeat(1,3,1,1)
-                fake_images=fake_img_batch.repeat(1,3,1,1)
-                fid.update(real_images,is_real=True)
-                fid.update(fake_images,is_real=False)
-                fid_score=fid.compute()
-                wandb.log({"FID score":fid_score},step=global_step)
             # Train the generator only after the critic has been trained c_times
             if i % c_times == 0:
                 optimizer_g.zero_grad()
@@ -162,21 +150,29 @@ def train(training_config: TrainingConfig):
                 out_fake = critic(gen_imgs)
                 # Adversarial loss
                 loss_g = -torch.mean(out_fake)
-                # summary_writer.add_scalar("Generator loss", loss_g, global_step)
-                wandb.log({"Generator loss": loss_g}, step=global_step)
-
                 # Calculate the gradients with respect to the input
                 loss_g.backward()
                 # Apply backward prop
                 optimizer_g.step()
                 scheduler_generator.step(epoch=epoch)
 
-                # summary_writer.add_images("Generated images", gen_imgs[:MAX_SUMMARY_IMAGES], global_step)
-                images = wandb.Image(
-                    gen_imgs[: training_config.max_summary_images],
-                    caption="Top: Output, Bottom: Input",
-                )
-                wandb.log({"Generated images": images}, step=global_step)
+                if global_step / c_times % 100 == 0:
+                    wandb.log({"Critic loss": loss_c}, step=global_step)
+                    wandb.log({"Generator loss": loss_g}, step=global_step)
+                    images = wandb.Image(
+                        gen_imgs[: training_config.max_summary_images],
+                        caption="Top: Output, Bottom: Input",
+                    )
+                    wandb.log({"Generated images": images}, step=global_step)
+                    fid.reset()
+                    #convert to RGB format expected by inception
+                    real_images=real_img_batch.repeat(1,3,1,1)
+                    fake_images=fake_img_batch.repeat(1,3,1,1)
+                    fid.update(real_images,is_real=True)
+                    fid.update(fake_images,is_real=False)
+                    fid_score=fid.compute()
+                    wandb.log({"FID score":fid_score},step=global_step)
+                    
     save_model(model=generator,config=training_config)
     
 
