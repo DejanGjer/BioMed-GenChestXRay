@@ -156,7 +156,7 @@ def train(training_config: TrainingConfig):
                 optimizer_g.step()
                 scheduler_generator.step(epoch=epoch)
 
-                if global_step / c_times % 100 == 0:
+                if (global_step / c_times) % training_config.log_interval == 0:
                     wandb.log({"Critic loss": loss_c}, step=global_step)
                     wandb.log({"Generator loss": loss_g}, step=global_step)
                     images = wandb.Image(
